@@ -36,13 +36,13 @@ const displayBoard = (positions) => {
     }
   };
 
-  const { q,w,e,a,s,d,z,x,c} = position;
-
+  const { q, w, e, a, s, d, z, x, c } = position;
   const data = [
     [q, w, e],
     [a, s, d],
     [z, x, c]
   ];
+  
   console.log(table(data, config));
 };
 
@@ -63,18 +63,24 @@ const watchStdin = (isEOI, controller, position) => {
   startStdin();
 
   process.stdin.on('data', (keyPressed) => {
+    if(controller.someoneWon) {
+      console.log(controller.someoneWon())
+      return;
+    }
+    
     console.clear();
     if (isEOI(keyPressed)) {
       stopStdin();
-      // onEnd();
       return;
     }
-    controller.updatePosition(position, keyPressed);
-    if(controller.hasWon())
-    if (!controller.allPositionsNotFilled(position)) {
+
+    controller.updatePosition(keyPressed);
+    if (!controller.allPositionsNotFilled()) {
       stopStdin();
-      displayBoard(position);
-      process.stdout.write('This Game is draw' + '\n');
+      if(!controller.someoneWon) {
+         displayBoard(position);
+         process.stdout.write('This Game is draw' + '\n');
+      } 
       return;
     }
     displayBoard(position);
@@ -82,16 +88,19 @@ const watchStdin = (isEOI, controller, position) => {
 };
 
 const main = () => {
-  const controller = new ControlGame();
+  const controller = new ControlGame(position);
+  controller.on('validMove', (recentPosition) => {
+    if (controller.hasWon()) {
+      console.log(position[recentPosition], 'is the winner');
+      stopStdin();
+      return;
+    }
+  })
   const isEOI = (key) => key === 'p';
 
   startStdin();
   watchStdin(isEOI, controller, position);
   displayBoard(position);
-
-
-
-
 }
 
 main();
